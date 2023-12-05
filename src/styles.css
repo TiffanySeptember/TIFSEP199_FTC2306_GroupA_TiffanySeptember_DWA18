@@ -40,6 +40,7 @@ h1 {
   -webkit-text-fill-color: transparent;
   width: -moz-fit-content; /* For older Firefox versions (before version 22) */
   width: fit-content;
+  text-align: center;
 }
 
 .favourite {
