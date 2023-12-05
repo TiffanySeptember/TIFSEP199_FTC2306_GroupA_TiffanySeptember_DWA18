@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@craco/craco": "^7.1.0",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -16,10 +17,10 @@
   },
   "scripts": {
     "start": "concurrently \"npm run start-react\" \"npm run start-server\"",
-    "start-react": "react-scripts start",
+    "start-react": "craco start",
     "start-server": "json-server --watch db.json --port 3001",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
+    "build": "craco build",
+    "test": "craco test",
     "eject": "react-scripts eject",
     "add-react": "npm install"
   },
