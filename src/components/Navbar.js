@@ -2,8 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import "../navbar.css";
 
-
-const Navbar = ({ onSortChange }) => {
+const Navbar = ({ onSortChange, currentUser }) => {
   const handleSortChange = (option) => {
     onSortChange(option);
   };
@@ -55,9 +54,16 @@ const Navbar = ({ onSortChange }) => {
             >
               Newest
             </button>
-            <Link className="navbar-item" to="/login">
-              Login
-            </Link>
+            {!currentUser && (
+              <Link className="navbar-item" to="/login">
+                Login
+              </Link>
+            )}
+            {currentUser && (
+              <div className="navbar-item" to="/logout">
+                Hey, {currentUser.username}!
+              </div>
+            )}
           </nav>
         </nav>
 

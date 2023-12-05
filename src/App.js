@@ -171,7 +171,7 @@ function App() {
 
   return (
     <div>
-      <Navbar onSortChange={handleSortChange} />
+      <Navbar onSortChange={handleSortChange} currentUser={currentUser} />
       <Routes>
         <Route
           path="/"
