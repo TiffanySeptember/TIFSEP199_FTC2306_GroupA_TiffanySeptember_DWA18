@@ -14,7 +14,6 @@ function PodcastDetail() {
         );
         const data = await response.json();
         setPodcast(data);
-        console.log(data);
       } catch (error) {
         console.error("Error fetching podcast details:", error);
       }
