@@ -1,39 +1,51 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import searchIcon from "../images/icons/search.svg";
 import PodcastCard from "./PodcastCard";
+import Icon from "awesome-react-icons/lib/cjs/Icon";
 
 function Favourites({
-  favorites: initialFavorites,
-  onToggleFavorite,
+  favourites: initialFavourites,
+  favouritesTitle,
+  onToggleFavourite,
+  onResetFavourites,
   loading,
   error,
 }) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [favorites, setFavorites] = useState(initialFavorites);
+  const [favourites, setFavourites] = useState(initialFavourites);
+  const { userId } = useParams();
 
   const handleInputChange = (event) => {
     const term = event.target.value.toLowerCase();
     setSearchTerm(term);
-    setFavorites(term ? filterFavorites(term) : initialFavorites);
+    setFavourites(term ? filterFavourites(term) : initialFavourites);
   };
 
-  const filterFavorites = useCallback(
+  const handleResetFavourites = () => {
+    if (window.confirm("Are you sure you want to Reset all your favourites?")) {
+      onResetFavourites();
+    }
+  };
+
+  const filterFavourites = useCallback(
     (term) => {
-      return initialFavorites.filter((podcast) => {
-        return podcast.title.toLowerCase().includes(term);
-      });
+      return initialFavourites.filter(
+        (podcast) =>
+          podcast.title.toLowerCase().includes(term.toLowerCase()) &&
+          podcast.userId === userId
+      );
     },
-    [initialFavorites]
+    [initialFavourites, userId]
   );
 
   useEffect(() => {
-    setFavorites(filterFavorites(searchTerm));
-  }, [searchTerm, filterFavorites, initialFavorites]);
+    setFavourites(filterFavourites(searchTerm));
+  }, [searchTerm, filterFavourites, initialFavourites]);
 
   return (
     <div className="app">
-      <h1>Favorites❤️</h1>
+      <h1>Favourites❤️</h1>
 
       <div className="search">
         <input
@@ -45,6 +57,14 @@ function Favourites({
         <img src={searchIcon} alt="search" />
       </div>
 
+      <div>
+        {favourites.length > 0 && (
+          <button className="floating-btn" onClick={handleResetFavourites}>
+            <Icon name="trash-other" size={30} strokeWidth={3} />
+          </button>
+        )}
+      </div>
+
       {loading ? (
         <div className="empty">
           <h2>Loading...</h2>
@@ -53,20 +73,21 @@ function Favourites({
         <div className="error">
           <p>{error}</p>
         </div>
-      ) : favorites.length > 0 ? (
+      ) : favourites.length > 0 ? (
         <div className="container">
-          {favorites.map((favorite) => (
-            <Link to={`/podcast/${favorite.id}`} key={favorite.id}>
+          <h2>{favouritesTitle}</h2>
+          {favourites.map((favourite) => (
+            <Link to={`/podcast/${favourite.id}`} key={favourite.id}>
               <PodcastCard
-                podcast={{ ...favorite, isFavorite: true }}
-                onToggleFavorite={onToggleFavorite}
+                podcast={{ ...favourite, isFavourite: true }}
+                onToggleFavourite={onToggleFavourite}
               />
             </Link>
           ))}
         </div>
       ) : (
         <div className="empty">
-          <h2>No favorites found</h2>
+          <h2>No favourites found</h2>
         </div>
       )}
     </div>

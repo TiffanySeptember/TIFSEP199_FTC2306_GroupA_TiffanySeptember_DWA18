@@ -2,10 +2,18 @@ import React, { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import searchIcon from "../images/icons/search.svg";
 import PodcastCard from "../components/PodcastCard";
+import Icon from "awesome-react-icons";
 
-function Home({ podcasts: initialPodcasts, onToggleFavorite, loading, error }) {
+function Home({
+  podcasts: initialPodcasts,
+  title,
+  onToggleFavourite,
+  loading,
+  error,
+}) {
   const [searchTerm, setSearchTerm] = useState("");
   const [podcasts, setPodcasts] = useState(initialPodcasts);
+  const [showButton, setShowButton] = useState(false);
 
   const handleInputChange = (event) => {
     const term = event.target.value.toLowerCase();
@@ -16,14 +24,35 @@ function Home({ podcasts: initialPodcasts, onToggleFavorite, loading, error }) {
   const filterPodcasts = useCallback(
     (term) => {
       return initialPodcasts.filter((podcast) => {
-        return podcast.title.toLowerCase().includes(term);
+        return podcast.title.toLowerCase().includes(term.toLowerCase());
       });
     },
     [initialPodcasts]
   );
 
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
   useEffect(() => {
     setPodcasts(filterPodcasts(searchTerm));
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowButton(true);
+      } else {
+        setShowButton(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    // Cleanup the event listener on component unmount
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, [searchTerm, filterPodcasts, initialPodcasts]);
 
   return (
@@ -40,6 +69,14 @@ function Home({ podcasts: initialPodcasts, onToggleFavorite, loading, error }) {
         <img src={searchIcon} alt="search" />
       </div>
 
+      <div>
+        {showButton && (
+          <button className="floating-btn" onClick={scrollToTop}>
+            <Icon name="chevron-up" size={30} strokeWidth={3} />
+          </button>
+        )}
+      </div>
+
       {loading ? (
         <div className="empty">
           <h2>Loading...</h2>
@@ -50,11 +87,12 @@ function Home({ podcasts: initialPodcasts, onToggleFavorite, loading, error }) {
         </div>
       ) : podcasts.length > 0 ? (
         <div className="container">
+          <h2>{title}</h2>
           {podcasts.map((podcast) => (
             <Link to={`/podcast/${podcast.id}`} key={podcast.id}>
               <PodcastCard
                 podcast={podcast}
-                onToggleFavorite={onToggleFavorite}
+                onToggleFavourite={onToggleFavourite}
               />
             </Link>
           ))}

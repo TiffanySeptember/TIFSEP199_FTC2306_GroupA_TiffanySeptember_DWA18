@@ -5,6 +5,15 @@ import "../podcastDetail.css";
 function PodcastDetail() {
   const { id } = useParams();
   const [podcast, setPodcast] = useState(null);
+  const [openDropdown, setOpenDropdown] = useState(false);
+  const [selectedSeason, setSelectedSeason] = useState(1);
+  const [season, setSeason] = useState(null);
+
+  const handleViewSeason = (season) => {
+    setOpenDropdown(false);
+    setSelectedSeason(season.season);
+    setSeason(season);
+  };
 
   useEffect(() => {
     const fetchPodcast = async () => {
@@ -14,6 +23,7 @@ function PodcastDetail() {
         );
         const data = await response.json();
         setPodcast(data);
+        setSeason(data.seasons[0]);
       } catch (error) {
         console.error("Error fetching podcast details:", error);
       }
@@ -36,37 +46,54 @@ function PodcastDetail() {
             </div>
           </section>
           <div className="podcast-detail-container">
-            <h3 className="podcast-detail__heading">Seasons and Episodes</h3>
-            {podcast.seasons.map((season, index) => (
-              <div className="podcast-detail__section" key={index}>
-                <h4 className="podcast-detail__season_title">{season.title}</h4>
-                {season.episodes.map((episode, index) => (
-                  <div className="podcast-detail__section" key={index}>
-                    <div className="podcast-detail">
-                      <h3 className="podcast-detail__episode_title">
-                        {episode.title}
-                      </h3>
-                      <h5 className="podcast-detail__title">
-                        {episode.description.substring(0, 200)}...
-                      </h5>
-                      <h5 className="podcast-detail__title">
-                        <i>Episode {episode.episode}</i>
-                      </h5>
+            <nav>
+              <ul>
+                <li>
+                  <a href="#/" onClick={() => setOpenDropdown(!openDropdown)}>
+                    Season {selectedSeason} ({season.episodes.length} Epidodes)
+                    <div id="down-triangle"></div>
+                  </a>
+                  <ul style={{ display: openDropdown ? "block" : "none" }}>
+                    {podcast.seasons.map((season) => (
+                      <a href="#/" onClick={() => handleViewSeason(season)}>
+                        Season {season.season}{" "}
+                        <span className="episodes">
+                          ({season.episodes.length} Epidodes)
+                        </span>
+                      </a>
+                    ))}
+                  </ul>
+                </li>
+              </ul>
+            </nav>
+            <div className="podcast-detail__section">
+              <h4 className="podcast-detail__season_title">{season.title}</h4>
+              {season.episodes.map((episode, index) => (
+                <div className="podcast-detail__section" key={index}>
+                  <div className="podcast-detail">
+                    <h3 className="podcast-detail__episode_title">
+                      {episode.title}
+                    </h3>
+                    <h5 className="podcast-detail__title">
+                      {episode.description.substring(0, 200)}...
+                    </h5>
+                    <h5 className="podcast-detail__title">
+                      <i>Episode {episode.episode}</i>
+                    </h5>
 
-                      <div className="podcast-detail__meta">
-                        <audio controls width="100%">
-                          <source src={episode.file} type="audio/mpeg" />
-                          Your browser does not support the audio tag.
-                        </audio>
-                        <div className="artwork">
-                          <img src={season.image} alt={season.title} />
-                        </div>
+                    <div className="podcast-detail__meta">
+                      <audio controls width="100%">
+                        <source src={episode.file} type="audio/mpeg" />
+                        Your browser does not support the audio tag.
+                      </audio>
+                      <div className="artwork">
+                        <img src={season.image} alt={season.title} />
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            ))}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       ) : (

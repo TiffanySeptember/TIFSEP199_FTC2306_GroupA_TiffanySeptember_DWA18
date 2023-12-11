@@ -10,14 +10,20 @@ import Login from "./components/Login";
 import Register from "./components/Register";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
+import Accordion from "./components/Accordion";
 
 const PODCASTS_URL = "https://podcast-api.netlify.app/shows";
-const FAVORITES_URL = "http://localhost:3001/favorites";
-const USERS_URL = "http://localhost:3001/users";
+const FAVOURITES_URL =
+  "https://humane-nutritious-jumpsuit.glitch.me/favourites";
+const USERS_URL = "https://humane-nutritious-jumpsuit.glitch.me/users";
 
 function App() {
   const [podcasts, setPodcasts] = useState([]);
-  const [favorites, setFavorites] = useState([]);
+  const [favourites, setFavourites] = useState([]);
+  const [filteredPodcasts, setFilteredPodcasts] = useState(null);
+  const [filteredFavourites, setFilteredFavourites] = useState(null);
+  const [title, setTitle] = useState(null);
+  const [favouritesTitle, setfavouritesTitle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
@@ -29,19 +35,19 @@ function App() {
       const podcastsData = await podcastsResponse.json();
 
       // Fetch favorites separately
-      const favoritesResponse = await fetch(FAVORITES_URL);
-      const favoritesData = await favoritesResponse.json();
+      const favoritesResponse = await fetch(FAVOURITES_URL);
+      const favouritesData = await favoritesResponse.json();
       // Update the local state with fetched data
       setPodcasts(
         podcastsData.map((podcast) => ({
           ...podcast,
-          isFavorite: favoritesData.some(
-            (favorite) => favorite.id === podcast.id
+          isFavourite: favouritesData.some(
+            (favourite) => favourite.id === podcast.id
           ),
         }))
       );
 
-      setFavorites(favoritesData);
+      setFavourites(favouritesData);
     } catch (error) {
       console.error("Error fetching data:", error);
       setError("An error occurred while fetching data.");
@@ -50,26 +56,34 @@ function App() {
     }
   }, []);
 
-  const toggleFavorite = async (podcast) => {
+  const toggleFavourite = async (podcast) => {
     try {
-      // Check if the podcast is already a favorite
-      const isFavorite = favorites.some(
-        (favorite) => favorite.id === podcast.id
+      if (!currentUser) {
+        alert("You need to login to add favourites!");
+        return;
+      }
+      // Check if the podcast is already a favourite
+      const isFavourite = favourites.some(
+        (favourite) => favourite.id === podcast.id
       );
 
-      if (isFavorite) {
-        // If the podcast is already a favorite, remove it
-        await fetch(`${FAVORITES_URL}/${podcast.id}`, {
+      if (isFavourite) {
+        // If the podcast is already a favourite, remove it
+        await fetch(`${FAVOURITES_URL}/${podcast.id}`, {
           method: "DELETE",
         });
       } else {
-        // If the podcast is not a favorite, add it
-        await fetch(FAVORITES_URL, {
+        // If the podcast is not a favourite, add it
+        await fetch(FAVOURITES_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(podcast),
+          body: JSON.stringify({
+            ...podcast,
+            updated: new Date(),
+            userId: currentUser.id,
+          }),
         });
       }
 
@@ -79,28 +93,63 @@ function App() {
     }
   };
 
-  const handleSortChange = (option) => {
-    let sortedPodcasts = [...podcasts];
+  const resetFavourites = async () => {
+    setLoading(true);
+    favourites.forEach(async (podcast) => {
+      await fetch(`${FAVOURITES_URL}/${podcast.id}`, {
+        method: "DELETE",
+      });
+    });
+
+    await fetchPodcasts();
+  };
+
+  const handleSortChange = (option, path) => {
+    let sortedItems = path === "/" ? [...podcasts] : [...favourites];
 
     if (option === "A-Z") {
-      sortedPodcasts = sortedPodcasts.sort((a, b) =>
-        a.title.localeCompare(b.title)
-      );
+      sortedItems = sortedItems.sort((a, b) => a.title.localeCompare(b.title));
     } else if (option === "Z-A") {
-      sortedPodcasts = sortedPodcasts.sort((a, b) =>
-        b.title.localeCompare(a.title)
-      );
+      sortedItems = sortedItems.sort((a, b) => b.title.localeCompare(a.title));
     } else if (option === "newest") {
-      sortedPodcasts = sortedPodcasts.sort(
+      sortedItems = sortedItems.sort(
         (a, b) => new Date(b.updated) - new Date(a.updated)
       );
     } else if (option === "oldest") {
-      sortedPodcasts = sortedPodcasts.sort(
+      sortedItems = sortedItems.sort(
         (a, b) => new Date(a.updated) - new Date(b.updated)
       );
     }
 
-    setPodcasts(sortedPodcasts);
+    if (path === "/") {
+      setFilteredPodcasts(sortedItems);
+    } else {
+      setFilteredFavourites(sortedItems);
+    }
+  };
+
+  const handleGenreChange = async (option, optionTitle, path) => {
+    if (!+option) {
+      if (path === "/") {
+        setFilteredPodcasts(podcasts);
+        setTitle(null);
+      } else {
+        setfavouritesTitle(null);
+        setFilteredFavourites(favourites);
+      }
+      return;
+    }
+    let genreItems = path === "/" ? [...podcasts] : [...favourites];
+
+    genreItems = genreItems.filter((item) => item.genres.includes(+option));
+
+    if (path === "/") {
+      setTitle(optionTitle);
+      setFilteredPodcasts(genreItems);
+    } else {
+      setfavouritesTitle(optionTitle);
+      setFilteredFavourites(genreItems);
+    }
   };
 
   const handleLogin = async ({ username, password }) => {
@@ -127,6 +176,11 @@ function App() {
       console.error("Error during login:", error.message);
       setError(error.message);
     }
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    navigate("/login");
   };
 
   const handleRegister = async ({ username, password }) => {
@@ -165,20 +219,54 @@ function App() {
     }
   };
 
+  const panels = [
+    {
+      label: "Seriously, Don't Use Icon Fonts",
+      content:
+        'Icons are everywhere. These "little miracle workers" (as John Hicks described them) help us reinforce meaning in the interfaces we design and build. Their popularity in web design has never been greater; the conciseness and versatility of pictograms in particular make them a lovely fit for displays large and small. But icons on the web have had their fair share of challenges.',
+    },
+    {
+      label: "Screen Readers Actually Read That Stuff",
+      content:
+        'Most assistive devices will read aloud text inserted via CSS, and many of the Unicode characters icon fonts depend on are no exception. Best-case scenario, your "favorite" icon gets read aloud as "black favorite star." Worse-case scenario, it\'s read as "unpronounceable" or skipped entirely.',
+    },
+    {
+      label: "They Fail Poorly and Often",
+      content:
+        'When your icon font fails, the browser treats it like any other font and replaces it with a fallback. Best-case scenario, you\'ve chosen your fallback characters carefully and something weird-looking but communicative still loads. Worse-case scenario (and far more often), the user sees something completely incongruous, usually the dreaded "missing character" glyph.',
+    },
+    {
+      label: "They're a Nightmare if You're Dyslexic",
+      content:
+        "Many dyslexic people find it helpful to swap out a website's typeface for something like OpenDyslexic. But icon fonts get replaced as well, which makes for a frustratingly broken experience.",
+    },
+    {
+      label: "There's Already a Better Way",
+      content:
+        "SVG is awesome for icons! It's a vector image format with optional support for CSS, JavaScript, reusability, accessibility and a bunch more. It was made for this sort of thing.",
+    },
+  ];
+
   useEffect(() => {
     fetchPodcasts();
   }, [fetchPodcasts]);
 
   return (
     <div>
-      <Navbar onSortChange={handleSortChange} currentUser={currentUser} />
+      <Navbar
+        onSortChange={handleSortChange}
+        onGenreChange={handleGenreChange}
+        onLogout={handleLogout}
+        currentUser={currentUser}
+      />
       <Routes>
         <Route
           path="/"
           element={
             <Home
-              podcasts={podcasts}
-              onToggleFavorite={toggleFavorite}
+              podcasts={filteredPodcasts || podcasts}
+              title={title}
+              onToggleFavourite={toggleFavourite}
               loading={loading}
               error={error}
             />
@@ -186,11 +274,13 @@ function App() {
         />
         <Route path="/podcast/:id" element={<PodcastDetail />} />
         <Route
-          path="favourites"
+          path="favourites/:userId"
           element={
             <Favourites
-              favorites={favorites}
-              onToggleFavorite={toggleFavorite}
+              favourites={filteredFavourites || favourites}
+              favouritesTitle={favouritesTitle}
+              onToggleFavourite={toggleFavourite}
+              onResetFavourites={resetFavourites}
               loading={loading}
               error={error}
             />
@@ -201,7 +291,7 @@ function App() {
           element={
             <Genre
               podcasts={podcasts}
-              onToggleFavorite={toggleFavorite}
+              onToggleFavourite={toggleFavourite}
               loading={loading}
               error={error}
             />
@@ -215,6 +305,7 @@ function App() {
           path="register"
           element={<Register error={error} onRegister={handleRegister} />}
         />
+        <Route path="accordion" element={<Accordion panels={panels} />} />
       </Routes>
     </div>
   );

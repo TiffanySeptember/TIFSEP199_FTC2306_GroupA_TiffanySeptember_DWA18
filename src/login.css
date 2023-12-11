@@ -34,9 +34,10 @@
 
 .login-box .user-box input {
   width: 100%;
-  padding: 10px 0;
+  padding: 10px 8px;
   font-size: 16px;
   color: #fff;
+  margin-top: 10px;
   margin-bottom: 30px;
   border: none;
   border-bottom: 1px solid #fff;

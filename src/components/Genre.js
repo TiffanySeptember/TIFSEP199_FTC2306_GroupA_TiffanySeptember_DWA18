@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 
 function Genre({
   podcasts: initialPodcasts,
-  onToggleFavorite,
+  onToggleFavourite,
   loading,
   error,
 }) {
@@ -91,7 +91,7 @@ function Genre({
                 <Link to={`/podcast/${podcast.id}`} key={podcast.id}>
                   <PodcastCard
                     podcast={podcast}
-                    onToggleFavorite={onToggleFavorite}
+                    onToggleFavourite={onToggleFavourite}
                   />
                 </Link>
               ))}
