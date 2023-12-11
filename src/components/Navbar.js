@@ -86,11 +86,6 @@ const Navbar = ({ onSortChange, onGenreChange, onLogout, currentUser }) => {
               itemId: `/favourites/${currentUser?.id}`,
               elemBefore: () => <Icon size={25} name="star" />,
             },
-            {
-              title: "Accordion",
-              itemId: `/accordion`,
-              elemBefore: () => <Icon size={25} name="star" />,
-            },
           ]}
         />
 

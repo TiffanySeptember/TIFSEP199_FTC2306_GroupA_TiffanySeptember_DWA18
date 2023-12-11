@@ -10,7 +10,6 @@ import Login from "./components/Login";
 import Register from "./components/Register";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
-import Accordion from "./components/Accordion";
 
 const PODCASTS_URL = "https://podcast-api.netlify.app/shows";
 const FAVOURITES_URL =
@@ -305,7 +304,6 @@ function App() {
           path="register"
           element={<Register error={error} onRegister={handleRegister} />}
         />
-        <Route path="accordion" element={<Accordion panels={panels} />} />
       </Routes>
     </div>
   );
